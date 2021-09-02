@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include <cstdlib>
 #include <vector>
+#include <optional>
 
 const uint32_t WIDTH = 800;
 const uint32_t HEIGHT = 600;
@@ -21,6 +22,13 @@ const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
 #endif
+
+struct QueueFamilyIndices 
+{
+	std::optional<uint32_t> graphicsFamily;
+
+	bool isComplete() { return graphicsFamily.has_value(); }
+};
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance _instance, const VkDebugUtilsMessengerCreateInfoEXT* _pCreateInfo, const VkAllocationCallbacks* _pAllocator, VkDebugUtilsMessengerEXT* _pDebugMessenger) 
 {
@@ -69,6 +77,87 @@ private:
 		createInstance();
 
 		setupDebugMessenger();
+
+		pickPhysicalDevice();
+	}
+
+	void pickPhysicalDevice() 
+	{
+		uint32_t deviceCount = 0;
+		vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+		if (deviceCount == 0) 
+			throw std::runtime_error("failed to find GPUs with Vulkan support!");
+		
+		std::vector<VkPhysicalDevice> devices(deviceCount);
+		vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+		for (const auto& device : devices) 
+		{
+			if (isDeviceSuitable(device) == true) {
+				physicalDevice = device;
+				break;
+			}
+		}
+
+		if (physicalDevice == VK_NULL_HANDLE) 
+			throw std::runtime_error("failed to find a suitable GPU!");
+	}
+
+	int rateDeviceSuitability(VkPhysicalDevice _device)
+	{
+		VkPhysicalDeviceProperties deviceProperties; // name, type, vulkan version...
+		vkGetPhysicalDeviceProperties(_device, &deviceProperties);
+
+		VkPhysicalDeviceFeatures deviceFeatures; // optional features (texture compression, 64bit floats, multi viewport rendering)
+		vkGetPhysicalDeviceFeatures(_device, &deviceFeatures);
+
+		int score = 0;
+
+		// Discrete GPUs have a significant performance advantage
+		if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) 
+			score += 1000;
+
+		// Maximum possible size of textures affects graphics quality
+		score += deviceProperties.limits.maxImageDimension2D;
+
+		// Application can't function without geometry shaders
+		if (deviceFeatures.geometryShader == false) 
+			return 0;
+		
+		return score;
+	}
+
+	bool isDeviceSuitable(VkPhysicalDevice _device)
+	{
+		QueueFamilyIndices indices = findQueueFamilies(_device);
+
+		return indices.isComplete();
+	}
+
+	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice _device)
+	{
+		QueueFamilyIndices indices;
+
+		uint32_t queueFamilyCount = 0;
+		vkGetPhysicalDeviceQueueFamilyProperties(_device, &queueFamilyCount, nullptr);
+
+		std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+		vkGetPhysicalDeviceQueueFamilyProperties(_device, &queueFamilyCount, queueFamilies.data());
+
+		int i = 0;
+		for (const auto& queueFamily : queueFamilies) 
+		{
+			if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) 
+				indices.graphicsFamily = i;
+
+			if (indices.isComplete() == true)
+				break;
+
+			i++;
+		}
+
+		return indices;
 	}
 
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& _createInfo) 
@@ -231,13 +320,13 @@ private:
 	}
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-		VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,		// severity of message (verbose / info / warning / error)
-		VkDebugUtilsMessageTypeFlagsEXT messageType,				// type (general / validation / performance)
-		const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,  // data (message, vulkan object, object count)
+		VkDebugUtilsMessageSeverityFlagBitsEXT _messageSeverity,		// severity of message (verbose / info / warning / error)
+		VkDebugUtilsMessageTypeFlagsEXT _messageType,				// type (general / validation / performance)
+		const VkDebugUtilsMessengerCallbackDataEXT* _pCallbackData,  // data (message, vulkan object, object count)
 		void* pUserData) 
 	{
 		std::string severity = "";
-		switch (messageSeverity)
+		switch (_messageSeverity)
 		{
 		case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
 			severity = "INFO";
@@ -254,7 +343,7 @@ private:
 
 		}
 
-		std::cerr << "validation layer: " << "[" << severity << "]" << pCallbackData->pMessage << std::endl;
+		std::cerr << "validation layer: " << "[" << severity << "]" << _pCallbackData->pMessage << std::endl;
 
 		return VK_FALSE;
 	}
@@ -285,6 +374,8 @@ private:
 	VkInstance instance;
 
 	VkDebugUtilsMessengerEXT debugMessenger;
+
+	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 };
 
 int main() 
