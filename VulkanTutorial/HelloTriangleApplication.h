@@ -19,6 +19,13 @@ struct QueueFamilyIndices
 	}
 };
 
+struct SwapChainSupportDetails
+{
+	VkSurfaceCapabilitiesKHR capabilities;		// Basic surface capabilities (min/max 이미지 개수 & 이미지 크기)
+	std::vector<VkSurfaceFormatKHR> formats;	// Surface formats (pixel format, color space)
+	std::vector<VkPresentModeKHR> presentModes;	// Available presentation modes
+};
+
 class HelloTriangleApplication
 {
 public:
@@ -38,13 +45,22 @@ private:
 
 	void createInstance();
 
+	void createLogicalDevice();
+
 	void createSurface();
 
-	void createLogicalDevice();
+	void createSwapChain();
+
+	bool checkDeviceExtensionSupport(VkPhysicalDevice _device);
 	
 	void checkGLFWRequiredInstanceExtensionsSupported(std::vector<const char*> _extensions);
 	
 	bool checkValidationLayerSupport();
+
+	// choose swap chain details
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& _capabilities);
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& _availablePresentModes);
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& _availableFormats);
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice _device);
 
@@ -55,6 +71,8 @@ private:
 	void pickPhysicalDevice();
 
 	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& _createInfo);
+
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice _device);
 
 	int rateDeviceSuitability(VkPhysicalDevice _device);
 
@@ -81,5 +99,10 @@ private:
 	VkQueue presentQueue;
 
 	VkSurfaceKHR surface;
+
+	VkSwapchainKHR swapChain; 
+	std::vector<VkImage> swapChainImages;
+	VkFormat swapChainImageFormat;
+	VkExtent2D swapChainExtent;
 };
 

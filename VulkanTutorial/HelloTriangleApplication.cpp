@@ -1,9 +1,11 @@
 ﻿#include "HelloTriangleApplication.h"
 
-#include <iostream>
-#include <stdexcept>
+#include <algorithm> // Necessary for std::min/std::max
+#include <cstdint> // Necessary for UINT32_MAX
 #include <cstdlib>
+#include <iostream>
 #include <set>
+#include <stdexcept>
 
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -18,6 +20,11 @@ const uint32_t HEIGHT = 600;
 const std::vector<const char*> validationLayers = 
 {
 	"VK_LAYER_KHRONOS_validation"
+};
+
+// device extension
+const std::vector<const char*> deviceExtensions = {
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
 VkResult CreateDebugUtilsMessengerEXT(VkInstance _instance, const VkDebugUtilsMessengerCreateInfoEXT* _pCreateInfo, const VkAllocationCallbacks* _pAllocator, VkDebugUtilsMessengerEXT* _pDebugMessenger)
@@ -72,6 +79,8 @@ void HelloTriangleApplication::initVulkan()
 	pickPhysicalDevice();
 
 	createLogicalDevice();
+
+	createSwapChain();
 }
 
 void HelloTriangleApplication::mainLoop()
@@ -84,6 +93,8 @@ void HelloTriangleApplication::mainLoop()
 
 void HelloTriangleApplication::cleanup()
 {
+	vkDestroySwapchainKHR(device, swapChain, nullptr);
+
 	vkDestroyDevice(device, nullptr);
 
 	if (enableValidationLayers == true)
@@ -148,13 +159,6 @@ void HelloTriangleApplication::createInstance()
 		throw std::runtime_error("Failed to create instance!");
 }
 
-void HelloTriangleApplication::createSurface()
-{
-	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) 
-		throw std::runtime_error("failed to create window surface!");
-	
-}
-
 void HelloTriangleApplication::createLogicalDevice()
 {
 	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
@@ -182,6 +186,7 @@ void HelloTriangleApplication::createLogicalDevice()
 	createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
 	createInfo.pEnabledFeatures = &deviceFeatures;
 
+	// validation layer 
 	if (enableValidationLayers == true)
 	{
 		createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
@@ -190,11 +195,93 @@ void HelloTriangleApplication::createLogicalDevice()
 	else
 		createInfo.enabledLayerCount = 0;
 
+	// device extension
+	createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
+	createInfo.ppEnabledExtensionNames = deviceExtensions.data();
+
 	if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
 		throw std::runtime_error("failed to create logical device!");
 
-	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue); 
+	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
 	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+}
+
+void HelloTriangleApplication::createSurface()
+{
+	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) 
+		throw std::runtime_error("failed to create window surface!");
+	
+}
+
+void HelloTriangleApplication::createSwapChain()
+{
+	SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
+
+	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
+	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+
+	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+	if (swapChainSupport.capabilities.maxImageCount > 0 && imageCount > swapChainSupport.capabilities.maxImageCount) 
+		imageCount = swapChainSupport.capabilities.maxImageCount;
+
+	VkSwapchainCreateInfoKHR createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	createInfo.surface = surface; 
+	createInfo.minImageCount = imageCount;
+	createInfo.imageFormat = surfaceFormat.format;
+	createInfo.imageColorSpace = surfaceFormat.colorSpace;
+	createInfo.imageExtent = extent;
+	createInfo.imageArrayLayers = 1;
+	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+
+	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+
+	if (indices.graphicsFamily != indices.presentFamily) 
+	{
+		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		createInfo.queueFamilyIndexCount = 2;
+		createInfo.pQueueFamilyIndices = queueFamilyIndices;
+	}
+	else 
+	{
+		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		createInfo.queueFamilyIndexCount = 0; // Optional
+		createInfo.pQueueFamilyIndices = nullptr; // Optional
+	}
+	
+	createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	createInfo.presentMode = presentMode;
+	createInfo.clipped = VK_TRUE;
+	createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) 
+		throw std::runtime_error("failed to create swap chain!");
+
+	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
+	swapChainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+
+	swapChainImageFormat = surfaceFormat.format;
+	swapChainExtent = extent;
+}
+
+bool HelloTriangleApplication::checkDeviceExtensionSupport(VkPhysicalDevice _device)
+{
+	uint32_t extensionCount;
+	vkEnumerateDeviceExtensionProperties(_device, nullptr, &extensionCount, nullptr);
+
+	std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+	vkEnumerateDeviceExtensionProperties(_device, nullptr, &extensionCount, availableExtensions.data());
+
+	std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
+
+	for (const auto& extension : availableExtensions)
+		requiredExtensions.erase(extension.extensionName);
+
+	return requiredExtensions.empty();
 }
 
 void HelloTriangleApplication::checkGLFWRequiredInstanceExtensionsSupported(std::vector<const char*> _extensions)
@@ -266,6 +353,53 @@ bool HelloTriangleApplication::checkValidationLayerSupport()
 	return true;
 }
 
+VkExtent2D HelloTriangleApplication::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& _capabilities)
+{
+	if (_capabilities.currentExtent.width != UINT32_MAX) 
+		return _capabilities.currentExtent;
+	else 
+	{
+		int width, height;
+		glfwGetFramebufferSize(window, &width, &height);
+
+		VkExtent2D actualExtent = {
+			static_cast<uint32_t>(width),
+			static_cast<uint32_t>(height)
+		};
+
+		actualExtent.width = std::clamp(actualExtent.width, _capabilities.minImageExtent.width, _capabilities.maxImageExtent.width);
+		actualExtent.height = std::clamp(actualExtent.height, _capabilities.minImageExtent.height, _capabilities.maxImageExtent.height);
+
+		return actualExtent;
+	}
+}
+
+VkPresentModeKHR HelloTriangleApplication::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& _availablePresentModes)
+{
+	for (const auto& availablePresentMode : _availablePresentModes) 
+	{
+		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) 
+			return availablePresentMode;
+	}
+
+	return VK_PRESENT_MODE_FIFO_KHR;
+}
+
+VkSurfaceFormatKHR HelloTriangleApplication::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& _availableFormats)
+{
+	for (const auto& availableFormat : _availableFormats) 
+	{
+		// BGRA 8bit format, SRGB color space 
+		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) 
+			return availableFormat;
+	}
+
+	if (_availableFormats.empty() == false)
+		return _availableFormats[0];
+	else
+		return VkSurfaceFormatKHR();
+}
+
 QueueFamilyIndices HelloTriangleApplication::findQueueFamilies(VkPhysicalDevice _device)
 {
 	uint32_t queueFamilyCount = 0;
@@ -285,7 +419,7 @@ QueueFamilyIndices HelloTriangleApplication::findQueueFamilies(VkPhysicalDevice 
 		VkBool32 presentSupport = false;
 		vkGetPhysicalDeviceSurfaceSupportKHR(_device, i, surface, &presentSupport);
 
-		if (presentSupport == true) 
+		if (presentSupport == VK_TRUE)
 			indices.presentFamily = i;
 
 		if (indices.isComplete() == true)
@@ -315,9 +449,23 @@ std::vector<const char*> HelloTriangleApplication::getRequiredExtensions()
 
 bool HelloTriangleApplication::isDeviceSuitable(VkPhysicalDevice _device)
 {
+	// queue family 확인
 	QueueFamilyIndices indices = findQueueFamilies(_device);
 
-	return indices.isComplete();
+	// device extension 지원하는지 확인
+	bool extensionsSupported = checkDeviceExtensionSupport(_device);
+
+	// swap chain 지원 가능한지 확인
+	bool swapChainAdequate = false;
+	if (extensionsSupported == true) // extension 가능해야 swap chain 정보 가져오기 가능
+	{
+		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(_device);
+
+		// 최소 하나의 format, 하나의 presentation mode가 필요
+		swapChainAdequate = (swapChainSupport.formats.empty() == false) && (swapChainSupport.presentModes.empty() == false);
+	}
+
+	return indices.isComplete() && extensionsSupported && swapChainAdequate;
 }
 
 void HelloTriangleApplication::pickPhysicalDevice()
@@ -351,6 +499,31 @@ void HelloTriangleApplication::populateDebugMessengerCreateInfo(VkDebugUtilsMess
 	_createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
 	_createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
 	_createInfo.pfnUserCallback = debugCallback;
+}
+
+SwapChainSupportDetails HelloTriangleApplication::querySwapChainSupport(VkPhysicalDevice _device)
+{
+	SwapChainSupportDetails details;
+
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(_device, surface, &details.capabilities);
+
+	uint32_t formatCount;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(_device, surface, &formatCount, nullptr);
+	if (formatCount != 0) 
+	{
+		details.formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(_device, surface, &formatCount, details.formats.data());
+	}
+
+	uint32_t presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(_device, surface, &presentModeCount, nullptr);
+	if (presentModeCount != 0) 
+	{
+		details.presentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(_device, surface, &presentModeCount, details.presentModes.data());
+	}
+
+	return details;
 }
 
 int HelloTriangleApplication::rateDeviceSuitability(VkPhysicalDevice _device)
