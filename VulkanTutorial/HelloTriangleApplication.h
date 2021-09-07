@@ -6,8 +6,10 @@
 #include <GLFW/glfw3native.h>
 
 #include <vulkan/vulkan.h>
-#include <vector>
+
 #include <optional>
+#include <string>
+#include <vector>
 
 struct QueueFamilyIndices
 {
@@ -43,11 +45,15 @@ private:
 
 	void cleanup();
 
+	void createGraphicsPipeline();
+
 	void createImageViews();
 
 	void createInstance();
 
 	void createLogicalDevice();
+
+	VkShaderModule createShaderModule(const std::vector<char>& _code);
 
 	void createSurface();
 
@@ -79,6 +85,8 @@ private:
 	int rateDeviceSuitability(VkPhysicalDevice _device);
 
 	void setupDebugMessenger();
+
+	static std::vector<char> readFile(const std::string& _filename);
 
 	// _messageSeverity : severity of message (verbose / info / warning / error) 
 	// _messageType : type (general / validation / performance)
