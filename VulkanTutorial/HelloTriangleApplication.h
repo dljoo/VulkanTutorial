@@ -43,6 +43,8 @@ private:
 
 	void cleanup();
 
+	void createImageViews();
+
 	void createInstance();
 
 	void createLogicalDevice();
@@ -101,8 +103,12 @@ private:
 	VkSurfaceKHR surface;
 
 	VkSwapchainKHR swapChain; 
-	std::vector<VkImage> swapChainImages;
+
 	VkFormat swapChainImageFormat;
+
 	VkExtent2D swapChainExtent;
+
+	std::vector<VkImage> swapChainImages;
+	std::vector<VkImageView> swapChainImageViews;
 };
 
