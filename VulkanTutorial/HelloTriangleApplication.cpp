@@ -100,6 +100,8 @@ void HelloTriangleApplication::mainLoop()
 
 void HelloTriangleApplication::cleanup()
 {
+	vkDestroyPipeline(device, graphicsPipeline, nullptr);
+
 	vkDestroyPipelineLayout(device, pipelineLayout, nullptr);
 
 	vkDestroyRenderPass(device, renderPass, nullptr);
@@ -125,6 +127,7 @@ void HelloTriangleApplication::cleanup()
 
 void HelloTriangleApplication::createGraphicsPipeline()
 {
+	// shader stage
 	std::vector<char> vertShaderCode = readFile("shaders/vert.spv");
 	std::vector<char> fragShaderCode = readFile("shaders/frag.spv");
 
@@ -144,10 +147,6 @@ void HelloTriangleApplication::createGraphicsPipeline()
 	fragShaderStageInfo.pName = "main";
 
 	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
-
-	// local clean up
-	vkDestroyShaderModule(device, fragShaderModule, nullptr);
-	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 
 	// vertex input (bindings, attribute)
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
@@ -258,6 +257,35 @@ void HelloTriangleApplication::createGraphicsPipeline()
 
 	if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) 
 		throw std::runtime_error("failed to create pipeline layout!");
+
+	// create pipeline
+	VkGraphicsPipelineCreateInfo pipelineInfo{};
+	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	pipelineInfo.stageCount = 2;
+	pipelineInfo.pStages = shaderStages;
+	pipelineInfo.pVertexInputState = &vertexInputInfo;
+	pipelineInfo.pInputAssemblyState = &inputAssembly;
+	pipelineInfo.pViewportState = &viewportState;
+	pipelineInfo.pRasterizationState = &rasterizer;
+	pipelineInfo.pMultisampleState = &multisampling;
+	pipelineInfo.pDepthStencilState = nullptr; // Optional
+	pipelineInfo.pColorBlendState = &colorBlending;
+	pipelineInfo.pDynamicState = nullptr; // Optional
+	pipelineInfo.layout = pipelineLayout;
+	pipelineInfo.renderPass = renderPass;
+	pipelineInfo.subpass = 0;
+
+	// can create new pipeline from existing pipeline by basePipelineHandle or basePipelineIndex
+	// only used if the VK_PIPELINE_CREATE_DERIVATIVE_BIT flag is also specified in the "pipelineInfo.flags"
+	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
+	pipelineInfo.basePipelineIndex = -1; // Optional
+
+	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) 
+		throw std::runtime_error("failed to create graphics pipeline!");
+
+	// local clean up
+	vkDestroyShaderModule(device, fragShaderModule, nullptr);
+	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
 void HelloTriangleApplication::createImageViews()
@@ -411,8 +439,8 @@ void HelloTriangleApplication::createRenderPass()
 	// subpass
 	VkSubpassDescription subpass{};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1; // referenced from the fragment shader 
-	subpass.pColorAttachments = &colorAttachmentRef;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;  // referenced from the fragment shader 
 
 	// render pass
 	VkRenderPassCreateInfo renderPassInfo{};

@@ -121,8 +121,8 @@ private:
 	std::vector<VkImage> swapChainImages;
 	std::vector<VkImageView> swapChainImageViews;
 
+	VkPipeline graphicsPipeline;
 	VkPipelineLayout pipelineLayout;
-
 	VkRenderPass renderPass;
 };
 
