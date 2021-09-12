@@ -53,6 +53,8 @@ private:
 
 	void createLogicalDevice();
 
+	void createRenderPass();
+
 	VkShaderModule createShaderModule(const std::vector<char>& _code);
 
 	void createSurface();
@@ -120,5 +122,7 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 
 	VkPipelineLayout pipelineLayout;
+
+	VkRenderPass renderPass;
 };
 
