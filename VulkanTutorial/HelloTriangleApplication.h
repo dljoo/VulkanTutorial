@@ -45,6 +45,10 @@ private:
 
 	void cleanup();
 
+	void createCommandBuffers();
+
+	void createCommandPool();
+
 	void createFramebuffers();
 
 	void createGraphicsPipeline();
@@ -128,5 +132,9 @@ private:
 	VkRenderPass renderPass;
 
 	std::vector<VkFramebuffer> swapChainFramebuffers;
+
+	VkCommandPool commandPool;
+
+	std::vector<VkCommandBuffer> commandBuffers;
 };
 
