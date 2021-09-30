@@ -45,6 +45,8 @@ private:
 
 	void cleanup();
 
+	void createFramebuffers();
+
 	void createGraphicsPipeline();
 
 	void createImageViews();
@@ -124,5 +126,7 @@ private:
 	VkPipeline graphicsPipeline;
 	VkPipelineLayout pipelineLayout;
 	VkRenderPass renderPass;
+
+	std::vector<VkFramebuffer> swapChainFramebuffers;
 };
 
