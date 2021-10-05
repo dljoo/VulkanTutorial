@@ -61,6 +61,8 @@ private:
 
 	void createRenderPass();
 
+	void createSyncObjects();
+
 	VkShaderModule createShaderModule(const std::vector<char>& _code);
 
 	void createSurface();
@@ -77,6 +79,11 @@ private:
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& _capabilities);
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& _availablePresentModes);
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& _availableFormats);
+
+	// Acquire an image from the swap chain
+	// Execute the command buffer with that image as attachment in the framebuffer
+	// Return the image to the swap chain for presentation
+	void drawFrame();
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice _device);
 
@@ -136,5 +143,11 @@ private:
 	VkCommandPool commandPool;
 
 	std::vector<VkCommandBuffer> commandBuffers;
+
+	std::vector<VkSemaphore> imageAvailableSemaphores;
+	std::vector<VkSemaphore> renderFinishedSemaphores;
+	std::vector<VkFence> inFlightFences;
+	std::vector<VkFence> imagesInFlight;
+	size_t currentFrame = 0;
 };
 
