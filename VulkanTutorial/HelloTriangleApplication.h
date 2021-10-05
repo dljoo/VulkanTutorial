@@ -45,6 +45,8 @@ private:
 
 	void cleanup();
 
+	void cleanupSwapChain();
+
 	void createCommandBuffers();
 
 	void createCommandPool();
@@ -99,6 +101,8 @@ private:
 
 	int rateDeviceSuitability(VkPhysicalDevice _device);
 
+	void recreateSwapChain();
+
 	void setupDebugMessenger();
 
 	static std::vector<char> readFile(const std::string& _filename);
@@ -107,6 +111,8 @@ private:
 	// _messageType : type (general / validation / performance)
 	// _pCallbackData : data (message, vulkan object, object count) 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT _messageSeverity, VkDebugUtilsMessageTypeFlagsEXT _messageType, const VkDebugUtilsMessengerCallbackDataEXT* _pCallbackData, void* _pUserData);
+
+	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 private:
 	GLFWwindow* window;
@@ -149,5 +155,7 @@ private:
 	std::vector<VkFence> inFlightFences;
 	std::vector<VkFence> imagesInFlight;
 	size_t currentFrame = 0;
+
+	bool framebufferResized = false;
 };
 
