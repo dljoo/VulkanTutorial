@@ -107,6 +107,8 @@ private:
 
 	void createSwapChain();
 
+	void createVertexBuffer();
+
 	bool checkDeviceExtensionSupport(VkPhysicalDevice _device);
 	
 	void checkGLFWRequiredInstanceExtensionsSupported(std::vector<const char*> _extensions);
@@ -122,6 +124,8 @@ private:
 	// Execute the command buffer with that image as attachment in the framebuffer
 	// Return the image to the swap chain for presentation
 	void drawFrame();
+
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice _device);
 
@@ -183,6 +187,9 @@ private:
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
 	VkCommandPool commandPool;
+
+	VkBuffer vertexBuffer;
+	VkDeviceMemory vertexBufferMemory;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
