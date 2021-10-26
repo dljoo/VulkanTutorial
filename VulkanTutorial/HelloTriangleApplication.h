@@ -83,6 +83,8 @@ private:
 
 	void cleanupSwapChain();
 
+	void createBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _properties, VkBuffer& _buffer, VkDeviceMemory& _bufferMemory);
+
 	void createCommandBuffers();
 
 	void createCommandPool();
@@ -108,6 +110,8 @@ private:
 	void createSwapChain();
 
 	void createVertexBuffer();
+
+	void copyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size);
 
 	bool checkDeviceExtensionSupport(VkPhysicalDevice _device);
 	
