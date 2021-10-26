@@ -111,6 +111,8 @@ private:
 
 	void createVertexBuffer();
 
+	void createIndexBuffer();
+
 	void copyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size);
 
 	bool checkDeviceExtensionSupport(VkPhysicalDevice _device);
@@ -194,6 +196,8 @@ private:
 
 	VkBuffer vertexBuffer;
 	VkDeviceMemory vertexBufferMemory;
+	VkBuffer indexBuffer;
+	VkDeviceMemory indexBufferMemory;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
