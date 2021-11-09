@@ -86,6 +86,8 @@ private:
 
 	void mainLoop();
 
+	VkCommandBuffer beginSingleTimeCommands();
+
 	void cleanup();
 
 	void cleanupSwapChain();
@@ -124,9 +126,15 @@ private:
 
 	void createIndexBuffer();
 
+	void createTextureImage();
+
+	void createImage(uint32_t _width, uint32_t _height, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags _usage, VkMemoryPropertyFlags _properties, VkImage& _image, VkDeviceMemory& _imageMemory);
+
 	void createUniformBuffers();
 
 	void copyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size);
+
+	void copyBufferToImage(VkBuffer _buffer, VkImage _image, uint32_t _width, uint32_t _height);
 
 	bool checkDeviceExtensionSupport(VkPhysicalDevice _device);
 	
@@ -143,6 +151,8 @@ private:
 	// Execute the command buffer with that image as attachment in the framebuffer
 	// Return the image to the swap chain for presentation
 	void drawFrame();
+
+	void endSingleTimeCommands(VkCommandBuffer _commandBuffer);
 
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
@@ -163,6 +173,8 @@ private:
 	void recreateSwapChain();
 
 	void setupDebugMessenger();
+
+	void transitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _oldLayout, VkImageLayout _newLayout);
 
 	void updateUniformBuffer(uint32_t _currentImage);
 
@@ -220,6 +232,9 @@ private:
 
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
+
+	VkImage textureImage;
+	VkDeviceMemory textureImageMemory;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
