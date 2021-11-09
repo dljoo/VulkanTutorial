@@ -108,6 +108,8 @@ private:
 
 	void createImageViews();
 
+	VkImageView createImageView(VkImage _image, VkFormat _format);
+
 	void createInstance();
 
 	void createLogicalDevice();
@@ -127,6 +129,10 @@ private:
 	void createIndexBuffer();
 
 	void createTextureImage();
+
+	void createTextureImageView();
+
+	void createTextureSampler();
 
 	void createImage(uint32_t _width, uint32_t _height, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags _usage, VkMemoryPropertyFlags _properties, VkImage& _image, VkDeviceMemory& _imageMemory);
 
@@ -234,6 +240,8 @@ private:
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 
 	VkImage textureImage;
+	VkImageView textureImageView;
+	VkSampler textureSampler;
 	VkDeviceMemory textureImageMemory;
 
 	std::vector<VkCommandBuffer> commandBuffers;
