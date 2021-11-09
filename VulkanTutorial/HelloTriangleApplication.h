@@ -13,12 +13,36 @@
 #include <vector>
 #include <glm/glm.hpp>
 
+struct QueueFamilyIndices
+{
+	std::optional<uint32_t> graphicsFamily;
+	std::optional<uint32_t> presentFamily;
+
+	bool isComplete() {
+		return graphicsFamily.has_value() && presentFamily.has_value();
+	}
+};
+
+struct SwapChainSupportDetails
+{
+	VkSurfaceCapabilitiesKHR capabilities;		// Basic surface capabilities (min/max 이미지 개수 & 이미지 크기)
+	std::vector<VkSurfaceFormatKHR> formats;	// Surface formats (pixel format, color space)
+	std::vector<VkPresentModeKHR> presentModes;	// Available presentation modes
+};
+
+struct UniformBufferObject 
+{
+	glm::mat4 model;
+	glm::mat4 view;
+	glm::mat4 proj;
+};
+
 struct Vertex
 {
 	glm::vec2 pos;
 	glm::vec3 color;
 
-	static VkVertexInputBindingDescription getBindingDescription() 
+	static VkVertexInputBindingDescription getBindingDescription()
 	{
 		VkVertexInputBindingDescription bindingDescription{};
 		bindingDescription.binding = 0;
@@ -28,7 +52,7 @@ struct Vertex
 		return bindingDescription;
 	}
 
-	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() 
+	static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions()
 	{
 		// attributeDescriptions[0] - position
 		// attributeDescriptions[1] - color
@@ -45,23 +69,6 @@ struct Vertex
 
 		return attributeDescriptions;
 	}
-};
-
-struct QueueFamilyIndices
-{
-	std::optional<uint32_t> graphicsFamily;
-	std::optional<uint32_t> presentFamily;
-
-	bool isComplete() {
-		return graphicsFamily.has_value() && presentFamily.has_value();
-	}
-};
-
-struct SwapChainSupportDetails
-{
-	VkSurfaceCapabilitiesKHR capabilities;		// Basic surface capabilities (min/max 이미지 개수 & 이미지 크기)
-	std::vector<VkSurfaceFormatKHR> formats;	// Surface formats (pixel format, color space)
-	std::vector<VkPresentModeKHR> presentModes;	// Available presentation modes
 };
 
 class HelloTriangleApplication
@@ -89,6 +96,8 @@ private:
 
 	void createCommandPool();
 
+	void createDescriptorSetLayout();
+
 	void createFramebuffers();
 
 	void createGraphicsPipeline();
@@ -112,6 +121,8 @@ private:
 	void createVertexBuffer();
 
 	void createIndexBuffer();
+
+	void createUniformBuffers();
 
 	void copyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size);
 
@@ -151,6 +162,8 @@ private:
 
 	void setupDebugMessenger();
 
+	void updateUniformBuffer(uint32_t _currentImage);
+
 	static std::vector<char> readFile(const std::string& _filename);
 
 	// _messageSeverity : severity of message (verbose / info / warning / error) 
@@ -186,6 +199,8 @@ private:
 	std::vector<VkImage> swapChainImages;
 	std::vector<VkImageView> swapChainImageViews;
 
+	VkDescriptorSetLayout descriptorSetLayout;
+
 	VkPipeline graphicsPipeline;
 	VkPipelineLayout pipelineLayout;
 	VkRenderPass renderPass;
@@ -198,6 +213,9 @@ private:
 	VkDeviceMemory vertexBufferMemory;
 	VkBuffer indexBuffer;
 	VkDeviceMemory indexBufferMemory;
+
+	std::vector<VkBuffer> uniformBuffers;
+	std::vector<VkDeviceMemory> uniformBuffersMemory;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
