@@ -32,9 +32,9 @@ struct SwapChainSupportDetails
 
 struct UniformBufferObject 
 {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 proj;
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 proj;
 };
 
 struct Vertex
@@ -96,7 +96,9 @@ private:
 
 	void createCommandPool();
 
+	void createDescriptorPool(); 
 	void createDescriptorSetLayout();
+	void createDescriptorSets();
 
 	void createFramebuffers();
 
@@ -199,7 +201,9 @@ private:
 	std::vector<VkImage> swapChainImages;
 	std::vector<VkImageView> swapChainImageViews;
 
-	VkDescriptorSetLayout descriptorSetLayout;
+	VkDescriptorPool descriptorPool;
+	VkDescriptorSetLayout descriptorSetLayout; 
+	std::vector<VkDescriptorSet> descriptorSets;
 
 	VkPipeline graphicsPipeline;
 	VkPipelineLayout pipelineLayout;
