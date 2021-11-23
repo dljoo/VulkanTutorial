@@ -39,7 +39,7 @@ struct UniformBufferObject
 
 struct Vertex
 {
-	glm::vec2 pos;
+	glm::vec3 pos;
 	glm::vec3 color;
 	glm::vec2 texCoord;
 
@@ -61,7 +61,7 @@ struct Vertex
 		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions{};
 		attributeDescriptions[0].binding = 0;
 		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+		attributeDescriptions[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 		attributeDescriptions[0].offset = offsetof(Vertex, pos);
 
 		attributeDescriptions[1].binding = 0;
@@ -115,7 +115,7 @@ private:
 
 	void createImageViews();
 
-	VkImageView createImageView(VkImage _image, VkFormat _format);
+	VkImageView createImageView(VkImage _image, VkFormat _format, VkImageAspectFlags _aspectFlags);
 
 	void createInstance();
 
@@ -143,6 +143,8 @@ private:
 
 	void createImage(uint32_t _width, uint32_t _height, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags _usage, VkMemoryPropertyFlags _properties, VkImage& _image, VkDeviceMemory& _imageMemory);
 
+	void createDepthResources();
+
 	void createUniformBuffers();
 
 	void copyBuffer(VkBuffer _srcBuffer, VkBuffer _dstBuffer, VkDeviceSize _size);
@@ -167,11 +169,17 @@ private:
 
 	void endSingleTimeCommands(VkCommandBuffer _commandBuffer);
 
+	VkFormat findDepthFormat();
+
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice _device);
 
+	VkFormat findSupportedFormat(const std::vector<VkFormat>& _candidates, VkImageTiling _tiling, VkFormatFeatureFlags _features);
+
 	std::vector<const char*> getRequiredExtensions();
+
+	bool hasStencilComponent(VkFormat _format);
 
 	bool isDeviceSuitable(VkPhysicalDevice _device);
 
@@ -250,6 +258,10 @@ private:
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 	VkDeviceMemory textureImageMemory;
+
+	VkImage depthImage;
+	VkDeviceMemory depthImageMemory;
+	VkImageView depthImageView;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
