@@ -136,7 +136,7 @@ private:
 
 	void createImageViews();
 
-	VkImageView createImageView(VkImage _image, VkFormat _format, VkImageAspectFlags _aspectFlags);
+	VkImageView createImageView(VkImage _image, VkFormat _format, VkImageAspectFlags _aspectFlags, uint32_t _mipLevels);
 
 	void createInstance();
 
@@ -162,7 +162,7 @@ private:
 
 	void createTextureSampler();
 
-	void createImage(uint32_t _width, uint32_t _height, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags _usage, VkMemoryPropertyFlags _properties, VkImage& _image, VkDeviceMemory& _imageMemory);
+	void createImage(uint32_t _width, uint32_t _height, uint32_t _mipLevels, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags _usage, VkMemoryPropertyFlags _properties, VkImage& _image, VkDeviceMemory& _imageMemory);
 
 	void createDepthResources();
 
@@ -198,6 +198,8 @@ private:
 
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& _candidates, VkImageTiling _tiling, VkFormatFeatureFlags _features);
 
+	void generateMipmaps(VkImage _image, VkFormat _imageFormat, int32_t _texWidth, int32_t _texHeight, uint32_t _mipLevels);
+
 	std::vector<const char*> getRequiredExtensions();
 
 	bool hasStencilComponent(VkFormat _format);
@@ -218,7 +220,7 @@ private:
 
 	void setupDebugMessenger();
 
-	void transitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _oldLayout, VkImageLayout _newLayout);
+	void transitionImageLayout(VkImage _image, VkFormat _format, VkImageLayout _oldLayout, VkImageLayout _newLayout, uint32_t _mipLevels);
 
 	void updateUniformBuffer(uint32_t _currentImage);
 
@@ -279,6 +281,8 @@ private:
 
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
+
+	uint32_t mipLevels;
 
 	VkImage textureImage;
 	VkImageView textureImageView;
