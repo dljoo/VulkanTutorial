@@ -122,6 +122,8 @@ private:
 
 	void createBuffer(VkDeviceSize _size, VkBufferUsageFlags _usage, VkMemoryPropertyFlags _properties, VkBuffer& _buffer, VkDeviceMemory& _bufferMemory);
 
+	void createColorResources();
+
 	void createCommandBuffers();
 
 	void createCommandPool();
@@ -162,7 +164,7 @@ private:
 
 	void createTextureSampler();
 
-	void createImage(uint32_t _width, uint32_t _height, uint32_t _mipLevels, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags _usage, VkMemoryPropertyFlags _properties, VkImage& _image, VkDeviceMemory& _imageMemory);
+	void createImage(uint32_t _width, uint32_t _height, uint32_t _mipLevels, VkSampleCountFlagBits _numSample, VkFormat _format, VkImageTiling _tiling, VkImageUsageFlags _usage, VkMemoryPropertyFlags _properties, VkImage& _image, VkDeviceMemory& _imageMemory);
 
 	void createDepthResources();
 
@@ -199,6 +201,8 @@ private:
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& _candidates, VkImageTiling _tiling, VkFormatFeatureFlags _features);
 
 	void generateMipmaps(VkImage _image, VkFormat _imageFormat, int32_t _texWidth, int32_t _texHeight, uint32_t _mipLevels);
+
+	VkSampleCountFlagBits getMaxUsableSampleCount();
 
 	std::vector<const char*> getRequiredExtensions();
 
@@ -292,6 +296,12 @@ private:
 	VkImage depthImage;
 	VkDeviceMemory depthImageMemory;
 	VkImageView depthImageView;
+
+	VkImage colorImage;
+	VkDeviceMemory colorImageMemory;
+	VkImageView colorImageView;
+
+	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
